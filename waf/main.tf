@@ -24,6 +24,7 @@ resource "sigsci_edge_deployment" "this" {
   ]
 }
 
+# Requires -parallelism=1
 resource "sigsci_edge_deployment_service" "this" {
   for_each = toset(var.fastly_sids)
 
