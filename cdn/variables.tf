@@ -12,3 +12,8 @@ variable "edge_security_dictionary" {
   type    = string
   default = "Edge_Security"
 }
+
+variable "site" {
+  type        = string
+  description = "Site name for NGWAF."
+}

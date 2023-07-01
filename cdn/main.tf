@@ -16,6 +16,8 @@ resource "fastly_service_vcl" "this" {
     override_host     = var.backend_host
   }
 
+  // NGWAF start
+
   dynamicsnippet {
     name     = "ngwaf_config_init"
     type     = "init"
@@ -44,6 +46,8 @@ resource "fastly_service_vcl" "this" {
     name = var.edge_security_dictionary
   }
 
+  // NGWAF end
+
   lifecycle {
     ignore_changes = [
       product_enablement,
@@ -53,58 +57,25 @@ resource "fastly_service_vcl" "this" {
   force_destroy = true
 }
 
-resource "fastly_service_dictionary_items" "this" {
-  for_each = {
-    for d in fastly_service_vcl.this.dictionary : d.name => d if d.name == var.edge_security_dictionary
-  }
+// NGWAF start
 
-  service_id    = fastly_service_vcl.this.id
-  dictionary_id = each.value.dictionary_id
-  items = {
-    Enabled : "100"
-  }
+// locals {
+//   fastly_snippets = {
+//     for snippet in fastly_service_vcl.this.dynamicsnippet : snippet.name => snippet.snippet_id
+//   }
+// }
+
+module "waf" {
+  source = "./modules/waf"
+
+  site            = var.site
+  fastly_sid      = fastly_service_vcl.this.id
+  dictionary_name = var.edge_security_dictionary
+  // snippets        = local.fastly_snippets
+
+  depends_on = [
+    fastly_service_vcl.this
+  ]
 }
 
-resource "fastly_service_dynamic_snippet_content" "ngwaf_config_init" {
-  for_each = {
-    for d in fastly_service_vcl.this.dynamicsnippet : d.name => d if d.name == "ngwaf_config_init"
-  }
-
-  service_id      = fastly_service_vcl.this.id
-  snippet_id      = each.value.snippet_id
-  content         = "### Fastly managed ngwaf_config_init"
-  manage_snippets = false
-}
-
-resource "fastly_service_dynamic_snippet_content" "ngwaf_config_miss" {
-  for_each = {
-    for d in fastly_service_vcl.this.dynamicsnippet : d.name => d if d.name == "ngwaf_config_miss"
-  }
-
-  service_id      = fastly_service_vcl.this.id
-  snippet_id      = each.value.snippet_id
-  content         = "### Fastly managed ngwaf_config_miss"
-  manage_snippets = false
-}
-
-resource "fastly_service_dynamic_snippet_content" "ngwaf_config_pass" {
-  for_each = {
-    for d in fastly_service_vcl.this.dynamicsnippet : d.name => d if d.name == "ngwaf_config_pass"
-  }
-
-  service_id      = fastly_service_vcl.this.id
-  snippet_id      = each.value.snippet_id
-  content         = "### Fastly managed ngwaf_config_pass"
-  manage_snippets = false
-}
-
-resource "fastly_service_dynamic_snippet_content" "ngwaf_config_deliver" {
-  for_each = {
-    for d in fastly_service_vcl.this.dynamicsnippet : d.name => d if d.name == "ngwaf_config_deliver"
-  }
-
-  service_id      = fastly_service_vcl.this.id
-  snippet_id      = each.value.snippet_id
-  content         = "### Fastly managed ngwaf_config_deliver"
-  manage_snippets = false
-}
+// NGWAF end
