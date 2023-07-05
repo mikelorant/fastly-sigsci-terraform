@@ -1,4 +1,4 @@
-variable "site" {
-  type        = string
-  description = "Site name for NGWAF."
+variable "sites" {
+  type        = list(string)
+  description = "List of sites for NGWAF."
 }

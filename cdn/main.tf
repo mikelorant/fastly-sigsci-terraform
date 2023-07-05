@@ -1,3 +1,12 @@
+locals {
+  ngwaf_dynamicsnippet = {
+    "init"    = 0
+    "miss"    = 9000
+    "pass"    = 9000
+    "deliver" = 9000
+  }
+}
+
 resource "fastly_service_vcl" "this" {
   name = "Demo [${terraform.workspace}]"
 
@@ -18,32 +27,22 @@ resource "fastly_service_vcl" "this" {
 
   // NGWAF start
 
-  dynamicsnippet {
-    name     = "ngwaf_config_init"
-    type     = "init"
-    priority = 0
+  dynamic "dynamicsnippet" {
+    for_each = var.configure_waf ? local.ngwaf_dynamicsnippet : {}
+
+    content {
+      name     = "ngwaf_config_${dynamicsnippet.key}"
+      type     = dynamicsnippet.key
+      priority = dynamicsnippet.value
+    }
   }
 
-  dynamicsnippet {
-    name     = "ngwaf_config_miss"
-    type     = "miss"
-    priority = 9000
-  }
+  dynamic "dictionary" {
+    for_each = var.configure_waf ? [1] : []
 
-  dynamicsnippet {
-    name     = "ngwaf_config_pass"
-    type     = "pass"
-    priority = 9000
-  }
-
-  dynamicsnippet {
-    name     = "ngwaf_config_deliver"
-    type     = "deliver"
-    priority = 9000
-  }
-
-  dictionary {
-    name = var.edge_security_dictionary
+    content {
+      name = var.edge_security_dictionary
+    }
   }
 
   // NGWAF end
@@ -59,19 +58,12 @@ resource "fastly_service_vcl" "this" {
 
 // NGWAF start
 
-// locals {
-//   fastly_snippets = {
-//     for snippet in fastly_service_vcl.this.dynamicsnippet : snippet.name => snippet.snippet_id
-//   }
-// }
-
 module "waf" {
   source = "./modules/waf"
 
   site            = var.site
   fastly_sid      = fastly_service_vcl.this.id
   dictionary_name = var.edge_security_dictionary
-  // snippets        = local.fastly_snippets
 
   depends_on = [
     fastly_service_vcl.this

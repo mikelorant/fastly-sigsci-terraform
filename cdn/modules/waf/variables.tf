@@ -12,8 +12,3 @@ variable "dictionary_name" {
   type        = string
   description = "Fastly edge security dictionary name."
 }
-
-// variable "snippets" {
-//   type        = map
-//   description = "Fastly dynamic snippets."
-// }

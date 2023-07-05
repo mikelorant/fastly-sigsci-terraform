@@ -1,1 +1,3 @@
-site = "demo"
+sites = [
+  "demo"
+]

@@ -1,6 +1,8 @@
 resource "sigsci_site" "this" {
-  short_name             = var.site
-  display_name           = var.site
+  for_each = toset(var.sites)
+
+  short_name             = each.key
+  display_name           = each.key
   block_duration_seconds = 86400
   block_http_code        = 406
   agent_anon_mode        = ""
@@ -8,7 +10,9 @@ resource "sigsci_site" "this" {
 }
 
 resource "sigsci_edge_deployment" "this" {
-  site_short_name = var.site
+  for_each = toset(var.sites)
+
+  site_short_name = each.key
   provisioner "local-exec" {
     command = "echo 'Sleep for 120 seconds'; sleep 120"
   }

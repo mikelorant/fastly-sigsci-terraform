@@ -8,6 +8,11 @@ variable "backend_host" {
   description = "hostname used for backend."
 }
 
+variable "configure_waf" {
+  type        = bool
+  description = "Enable NGWAF."
+}
+
 variable "edge_security_dictionary" {
   type    = string
   default = "Edge_Security"
